@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Aurora BBS — Interactive Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 1920px;
+      height: 846px;
+      overflow: hidden;
+      font-family: 'Mulish', 'Segoe UI', Arial, Helvetica, sans-serif;
+      background: #EEF1F5;
+      color: #161A20;
+    }
+
+    svg {
+      display: block;
+    }
+
+    .app {
+      width: 1920px;
+      height: 846px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* DEMO PROGRESS BAR (training scaffold, not part of real software) */
+    .demo-topbar {
+      height: 60px;
+      flex: 0 0 60px;
+      background: linear-gradient(120deg, #0B2E4A, #123A5C);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 40px;
+    }
+
+    .demo-topbar .title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .demo-topbar .title .tri {
+      width: 0;
+      height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 16px solid #FF3B3B;
+      position: relative;
+    }
+
+    .steps {
+      display: flex;
+      gap: 0;
+      align-items: center;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #7FA0BC;
+      position: relative;
+    }
+
+    .step .num {
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      background: #1C4A6E;
+      color: #B9CBDB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step.active {
+      color: #fff;
+    }
+
+    .step.active .num {
+      background: #FF3B3B;
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(255, 59, 59, .22);
+    }
+
+    .step.done .num {
+      background: #2FBE72;
+      color: #fff;
+    }
+
+    .step:not(:last-child):after {
+      content: '';
+      width: 24px;
+      height: 2px;
+      background: #25547A;
+      margin-left: 6px;
+      border-radius: 2px;
+    }
+
+    .stage {
+      flex: 1;
+      position: relative;
+      height: 786px;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* SCREEN: LOGIN */
+    #screen-login {
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 25% 15%, #2E75B6 0%, #123A5C 55%, #0B2540 100%);
+    }
+
+    .login-card {
+      width: 600px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, .35);
+      padding: 56px 60px;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 38px;
+    }
+
+    .login-logo .tri-big {
+      width: 0;
+      height: 0;
+      border-left: 24px solid transparent;
+      border-right: 24px solid transparent;
+      border-bottom: 40px solid #FF3B3B;
+      position: relative;
+    }
+
+    .login-logo .tri-big:after {
+      content: '';
+      position: absolute;
+      left: -7px;
+      top: 18px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid #FF3B3B;
+    }
+
+    .login-logo span {
+      font-size: 38px;
+      font-weight: 900;
+      color: #0B2E4A;
+      letter-spacing: .5px;
+    }
+
+    .field {
+      margin-bottom: 24px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #5B6472;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 15px 17px;
+      border: 2px solid #DEE3E8;
+      border-radius: 10px;
+      font-size: 18px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s ease;
+    }
+
+    .field input:focus {
+      border-color: #2E75B6;
+    }
+
+    .login-hint {
+      font-size: 14px;
+      color: #8C93A0;
+      margin: -12px 0 22px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .btn {
+      padding: 15px 28px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: filter .15s ease, transform .1s ease, box-shadow .15s ease;
+    }
+
+    .btn:active {
+      transform: scale(.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #2E75B6, #1B5A94);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(46, 117, 182, .35);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-primary[disabled] {
+      background: #C3CAD2;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-ghost {
+      background: #F0F2F5;
+      color: #4A5261;
+    }
+
+    .btn-ghost:hover {
+      background: #E5E8EC;
+    }
+
+    /* SCREEN: AURORA APP SHELL */
+    #screen-app {
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .aurora-toolbar {
+      height: 80px;
+      flex: 0 0 80px;
+      background: #fff;
+      border-bottom: 1px solid #E4E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .aurora-brand {
+      display: flex;
+      align-items: center;
+      gap: 100px;
+    }
+
+    .aurora-brand .tri {
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 25px solid #FF3B3B;
+      position: relative;
+    }
+
+    .aurora-brand .tri:after {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 11px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #FF3B3B;
+    }
+
+    .aurora-brand b {
+      font-size: 26px;
+      font-weight: 900;
+      color: #1B5A94;
+      letter-spacing: .5px;
+    }
+
+    .tb-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tb-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #5B6472;
+      transition: background .12s ease, color .12s ease;
+      user-select: none;
+    }
+
+    .tb-btn:hover {
+      background: #F0F5FA;
+      color: #1B5A94;
+    }
+
+    .tb-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+    }
+
+    .tb-btn span {
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .tb-divider {
+      width: 1px;
+      height: 40px;
+      background: #E4E7EB;
+      margin: 0 8px;
+    }
+
+    .tb-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .tb-meta-text {
+      font-size: 12.5px;
+      color: #7A8291;
+      line-height: 1.6;
+      text-align: right;
+    }
+
+    .tb-meta-text b {
+      color: #3A414C;
+      font-weight: 800;
+    }
+
+    .aurora-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .sidebar-app {
+      width: 290px;
+      background: #fff;
+      border-right: 1px solid #E4E7EB;
+      padding: 22px 0;
+      flex: 0 0 290px;
+    }
+
+    .folder {
+      padding: 10px 26px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #9A7A1E;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .folder svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .nav-item {
+      padding: 14px 26px 14px 46px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c2c2c;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      border-left: 4px solid transparent;
+      transition: background .12s ease;
+    }
+
+    .nav-item svg {
+      width: 17px;
+      height: 17px;
+      opacity: .65;
+      flex: 0 0 auto;
+    }
+
+    .nav-item:hover {
+      background: #EEF5FC;
+      color: #1B5A94;
+    }
+
+    .nav-item.target {
+      position: relative;
+      background: #F5F9FD;
+      border-left-color: #2E75B6;
+    }
+
+    .nav-item.target:after {
+      content: 'Click here';
+      position: absolute;
+      right: 10px;
+      background: #FF3B3B;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 12px;
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .center-panel {
+      flex: 1;
+      overflow-y: auto;
+      background: #F7F8FA;
+      position: relative;
+    }
+
+    .center-inner {
+      display: none;
+      padding: 36px 56px;
+    }
+
+    .center-inner.active {
+      display: block;
+    }
+
+    .dash-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 40px;
+      min-height: 560px;
+    }
+
+    .empty-card {
+      text-align: center;
+      max-width: 480px;
+    }
+
+    .empty-card .icon {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #E9EFF5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .empty-card .icon svg {
+      width: 44px;
+      height: 44px;
+      stroke: #2E75B6;
+    }
+
+    .empty-card h3 {
+      font-size: 24px;
+      color: #2A3138;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .empty-card p {
+      font-size: 15.5px;
+      color: #8890A0;
+      line-height: 1.55;
+    }
+
+    .rightbar-icons {
+      width: 88px;
+      flex: 0 0 88px;
+      background: #fff;
+      border-left: 1px solid #E4E7EB;
+      padding-top: 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .rb-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #5B6472;
+      padding: 6px 4px;
+      border-radius: 8px;
+      transition: background .12s ease, color .12s ease;
+      width: 76px;
+    }
+
+    .rb-btn:hover {
+      background: #F0F5FA;
+      color: #1B5A94;
+    }
+
+    .rb-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+    }
+
+    .rb-btn span {
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .aurora-statusbar {
+      height: 32px;
+      flex: 0 0 32px;
+      background: #F3F4F6;
+      border-top: 1px solid #E4E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 26px;
+      font-size: 12px;
+      color: #6B7280;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 25, 35, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+      z-index: 50;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 600px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, .35);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 26px;
+      border-bottom: 1px solid #EEE;
+    }
+
+    .modal-head .t {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+      color: #222;
+    }
+
+    .modal-head .t svg {
+      width: 18px;
+      height: 18px;
+      stroke: #FF3B3B;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      color: #999;
+      font-size: 20px;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 26px 26px 32px;
+    }
+
+    .modal-body .grp-label {
+      font-size: 16px;
+      font-weight: 800;
+      color: #222;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .dd-wrap {
+      position: relative;
+    }
+
+    .dd {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #D6DBE1;
+      border-radius: 10px;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .dd:hover {
+      border-color: #2E75B6;
+    }
+
+    .dd-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 340px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #D6DBE1;
+      border-radius: 10px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, .2);
+      display: none;
+      z-index: 20;
+    }
+
+    .dd-list.open {
+      display: block;
+    }
+
+    .dd-list div {
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .dd-list div:hover {
+      background: #EEF5FC;
+      color: #1B5A94;
+    }
+
+    .dd-list div.highlight {
+      background: #FFF6D9;
+      font-weight: 800;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    /* FORM VIEW */
+    .tab-bar {
+      background: linear-gradient(120deg, #C0272D, #9E1E23);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 11px 22px;
+      border-radius: 8px 8px 0 0;
+      display: inline-block;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #E4E7EB;
+      border-radius: 0 14px 14px 14px;
+      padding: 30px 34px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(20, 30, 40, .05);
+    }
+
+    .panel+.panel {
+      border-radius: 14px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #222;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .obs-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      row-gap: 18px;
+      align-items: center;
+      max-width: 720px;
+    }
+
+    .obs-grid label {
+      font-size: 15.5px;
+      color: #444;
+      font-weight: 600;
+    }
+
+    .date-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-input-wrap input {
+      width: 210px;
+      padding: 12px 15px;
+      border: 2px solid #D6DBE1;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .cal-btn {
+      width: 42px;
+      height: 42px;
+      border: 2px solid #D6DBE1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: #F7F9FA;
+    }
+
+    .cal-btn svg {
+      width: 19px;
+      height: 19px;
+      stroke: #5B6472;
+    }
+
+    .cal-btn:hover {
+      background: #EEF5FC;
+      border-color: #2E75B6;
+    }
+
+    .activity-link {
+      color: #1B5A94;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .mini-cal {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      background: #fff;
+      border: 1px solid #D6DBE1;
+      border-radius: 12px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, .22);
+      padding: 18px;
+      width: 290px;
+      z-index: 30;
+      display: none;
+    }
+
+    .mini-cal.open {
+      display: block;
+    }
+
+    .mini-cal .cal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .mini-cal .cal-head span {
+      cursor: pointer;
+      color: #1B5A94;
+      padding: 0 8px;
+      font-size: 17px;
+    }
+
+    .mini-cal .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      font-size: 13.5px;
+      text-align: center;
+    }
+
+    .mini-cal .cal-grid .dow {
+      color: #999;
+      font-weight: 800;
+      padding: 5px 0;
+    }
+
+    .mini-cal .cal-grid .day {
+      padding: 8px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .mini-cal .cal-grid .day:hover {
+      background: #EEF5FC;
+    }
+
+    .mini-cal .cal-grid .day.today {
+      border: 2px solid #2E75B6;
+    }
+
+    .mini-cal .cal-grid .blank {
+      visibility: hidden;
+    }
+
+    table.checklist {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.checklist th {
+      text-align: left;
+      font-size: 13.5px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: #8890A0;
+      padding: 9px 6px;
+      border-bottom: 2px solid #eee;
+    }
+
+    table.checklist th.center,
+    table.checklist td.center {
+      text-align: center;
+      width: 76px;
+    }
+
+    table.checklist td {
+      padding: 13px 6px;
+      font-size: 16px;
+      color: #282E36;
+      border-bottom: 1px solid #F1F1F1;
+    }
+
+    table.checklist tr.missing td {
+      background: #FFF0F0;
+    }
+
+    .radio {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .radio.na {
+      accent-color: #8890A0;
+    }
+
+    .radio.yes {
+      accent-color: #2FBE72;
+    }
+
+    .radio.no {
+      accent-color: #FF3B3B;
+    }
+
+    .banner {
+      background: #FDECEC;
+      border-left: 5px solid #FF3B3B;
+      padding: 13px 17px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #9B1B1F;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      display: none;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .intervene-row {
+      display: flex;
+      gap: 26px;
+      align-items: center;
+      margin: 20px 0 16px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .intervene-row label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .intervene-row input {
+      width: 20px;
+      height: 20px;
+      accent-color: #2E75B6;
+      cursor: pointer;
+    }
+
+    .follow-fields .fl {
+      margin-bottom: 14px;
+    }
+
+    .follow-fields .fl label {
+      font-size: 14px;
+      color: #666;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .follow-fields textarea {
+      width: 100%;
+      border: 2px solid #D6DBE1;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15.5px;
+      font-family: inherit;
+      resize: none;
+      height: 80px;
+      background: #FAFBFC;
+      line-height: 1.5;
+      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .follow-fields textarea:focus {
+      outline: none;
+      border-color: #2E75B6;
+      background: #fff;
+    }
+
+    .follow-fields textarea::placeholder {
+      color: #A6ACB8;
+    }
+
+    .submit-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+
+    .submit-row .btn {
+      padding: 15px 36px;
+      font-size: 17px;
+    }
+
+    /* CONFIRM VIEW */
+    .confirm-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 560px;
+      padding: 0 40px;
+    }
+
+    .confirm-card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .12);
+      padding: 56px 64px;
+      text-align: center;
+      width: 560px;
+      border: 1px solid #E4E7EB;
+    }
+
+    .check-circle {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(120deg, #2FBE72, #249A5B);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 26px;
+      box-shadow: 0 10px 24px rgba(47, 190, 114, .35);
+    }
+
+    .check-circle svg {
+      width: 42px;
+      height: 42px;
+    }
+
+    .confirm-card h2 {
+      font-size: 27px;
+      color: #161A20;
+      margin-bottom: 12px;
+      font-weight: 900;
+    }
+
+    .confirm-card p {
+      font-size: 16px;
+      color: #8890A0;
+      margin-bottom: 28px;
+      line-height: 1.55;
+    }
+
+    .summary {
+      text-align: left;
+      /* background: #F7F9FA; */
+      border-radius: 12px;
+      padding: 20px 22px;
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+
+    .summary div {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      color: #444;
+    }
+
+    .summary b {
+      color: #111;
+      font-size: 15.5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <div class="demo-topbar">
+      <!-- <div class="title"><span class="tri"></span> AURORA - Behaviour Based Safety Demo</div> -->
+      <!-- <div class="title"><img src="./images/aurora-logo-white.png" height="40px" alt=""></div> -->
+      <div class="steps" id="steps"></div>
+    </div>
+
+    <div class="stage">
+
+      <!-- SCREEN: LOGIN -->
+      <div class="screen active" id="screen-login">
+        <div class="login-card">
+          <div class="login-logo"><img src="./images/aurora-logo.png" height="60px" alt=""></div>
+          <div class="field">
+            <label>User Name</label>
+            <input type="text" id="username" value="" placeholder="Enter your username">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="pw" placeholder="Type any password">
+          </div>
+          <div class="login-hint">This is a training simulation — any username and password will work.</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="loginBtn" disabled onclick="doLogin()">Login</button>
+            <button class="btn btn-ghost"
+              onclick="document.getElementById('pw').value=''; checkLoginReady();">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN: AURORA APP -->
+      <div class="screen" id="screen-app">
+
+        <div class="aurora-toolbar">
+          <div class="aurora-brand">
+            <img src="./images/aurora-logo.png" height="40px" alt="">
+            <div class="tb-icons">
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M4 4h13l3 3v13H4z" />
+                  <path d="M7 4v6h8V4" />
+                  <path d="M7 21v-7h10v7" />
+                </svg><span>Save</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M6 3h8l4 4v14H6z" />
+                  <path d="M12 11v6M9 14h6" />
+                </svg><span>New</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <rect x="8" y="8" width="12" height="12" rx="1.5" />
+                  <rect x="4" y="4" width="12" height="12" rx="1.5" />
+                </svg><span>Copy</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M4 7h16" />
+                  <path d="M9 7V4h6v3" />
+                  <path d="M6 7l1 13h10l1-13" />
+                </svg><span>Delete</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" />
+                  <path d="M18 4v4h-4" />
+                  <path d="M6 20v-4h4" />
+                </svg><span>Refresh</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M3 7h6l2 2h10v10H3z" />
+                </svg><span>Open</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M6 9V4h12v5" />
+                  <rect x="5" y="9" width="14" height="7" />
+                  <path d="M8 16v4h8v-4" />
+                </svg><span>Print</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M12 3v10" />
+                  <path d="M8 7l4-4 4 4" />
+                  <path d="M5 21h14" />
+                </svg><span>Export</span></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <path d="M12 13V3" />
+                  <path d="M8 9l4 4 4-4" />
+                  <path d="M5 21h14" />
+                </svg><span>Import</span></div>
+              <div class="tb-divider"></div>
+              <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M9.3 9.2a2.7 2.7 0 1 1 3.8 2.5c-.9.4-1.1.9-1.1 1.8" />
+                  <circle cx="12" cy="17" r=".65" fill="currentColor" stroke="none" />
+                </svg><span>Help</span></div>
+            </div>
+          </div>
+          <div class="tb-meta">
+            <div class="tb-meta-text"><b>Screen:</b> Observations<br><b>Database:</b> Energos Igloo</div>
+            <div class="tb-divider"></div>
+            <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 12a7.4 7.4 0 0 0-.1-1.2l2-1.4-1.6-2.7-2.3.7a7.4 7.4 0 0 0-2-1.2L15 4h-6l-.4 2.2a7.4 7.4 0 0 0-2 1.2l-2.3-.7-1.6 2.7 2 1.4a7.4 7.4 0 0 0 0 2.4l-2 1.4 1.6 2.7 2.3-.7a7.4 7.4 0 0 0 2 1.2L9 20h6l.4-2.2a7.4 7.4 0 0 0 2-1.2l2.3.7 1.6-2.7-2-1.4c.07-.4.1-.8.1-1.2z" />
+              </svg><span>Options</span></div>
+          </div>
+        </div>
+
+        <div class="aurora-body">
+
+          <div class="sidebar-app">
+            <div class="folder"><svg viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="1.8">
+                <path d="M3 6h6l2 2h10v11H3z" />
+              </svg>Behaviour Based Safety</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                <rect x="3" y="4" width="18" height="12" rx="1" />
+                <path d="M8 20h8M12 16v4" />
+              </svg>New Near Miss</div>
+            <div class="nav-item target" id="newObsNav" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.7">
+                <rect x="3" y="4" width="18" height="12" rx="1" />
+                <path d="M8 20h8M12 16v4" />
+              </svg>New Observation</div>
+          </div>
+
+          <div class="center-panel">
+
+            <div class="center-inner active" id="view-dashboard">
+              <div class="dash-empty">
+                <div class="empty-card">
+                  <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6">
+                      <path d="M12 3l8 4v5c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V7z" />
+                      <path d="M9.5 12l1.8 1.8L15 10" />
+                    </svg></div>
+                  <h3>Start a new safety record</h3>
+                  <p>Select an item from the left menu to begin a new Behaviour Based Safety observation.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="center-inner" id="view-form">
+              <div class="tab-bar">New Observation</div>
+              <div class="panel">
+                <div class="panel-title">Observation</div>
+                <div class="bbs-logo-flex" style="display: flex; justify-content: space-between;">
+                  <div class="obs-grid">
+                  <label>Observation Date</label>
+                  <div class="date-input-wrap">
+                    <input type="text" id="dateField" placeholder="dd/mm/yyyy" readonly onclick="toggleCal()">
+                    <div class="cal-btn" onclick="toggleCal()"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                        <rect x="3" y="5" width="18" height="16" rx="2" />
+                        <path d="M3 10h18M8 3v4M16 3v4" />
+                      </svg></div>
+                    <div class="mini-cal" id="miniCal"></div>
+                  </div>
+                  <label>Activity</label>
+                  <div class="activity-link" id="activityLabel">—</div>
+                </div>
+                <img src="./images/bbs-logo.png" alt="" height="80px">
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-title" style="color:#C0272D; border-bottom:none; margin-bottom:14px; font-size:16px;">
+                  Remember - if you observe something unsafe, STOP THE JOB!</div>
+                <div class="banner" id="formBanner">Please answer every item below and set the observation date before
+                  submitting.</div>
+                <table class="checklist" id="checklistTable">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Key Safety Behaviour</th>
+                      <th class="center">N/A</th>
+                      <th class="center">Yes</th>
+                      <th class="center">No</th>
+                    </tr>
+                  </thead>
+                  <tbody id="checklistBody"></tbody>
+                </table>
+
+                <div class="intervene-row">
+                  <span>Did you have to intervene and stop the job?</span>
+                  <label><input type="radio" name="intervene" onclick="setIntervene(true)"> Yes</label>
+                  <label><input type="radio" name="intervene" checked onclick="setIntervene(false)"> No</label>
+                </div>
+                <div class="follow-fields">
+                  <div class="fl"><label>While</label><textarea
+                      placeholder="Describe what the person was doing when you intervened…"></textarea></div>
+                  <div class="fl"><label>Was</label><textarea
+                      placeholder="Describe what was unsafe or incorrect…"></textarea></div>
+                  <div class="fl"><label>Because</label><textarea
+                      placeholder="Explain why this required you to stop the job…"></textarea></div>
+                </div>
+
+                <div class="submit-row">
+                  <button class="btn btn-primary" onclick="trySubmit()">✓ Submit</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="center-inner" id="view-confirm">
+              <div class="confirm-view">
+                <div class="confirm-card">
+                  <div class="check-circle"><svg viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13l4 4L19 7" stroke="white" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg></div>
+                  <h2>Close Successful</h2>
+                  <p>The observation has been closed successfully</p>
+                  <div class="summary" id="summaryBox"></div>
+                  <button class="btn btn-primary" onclick="restart()" style="margin-right: 12px;">OK</button>
+                  <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="rightbar-icons">
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <path d="M3 4h2l2 12h11l2-8H6" />
+                <circle cx="9.5" cy="20" r="1.3" />
+                <circle cx="17" cy="20" r="1.3" />
+              </svg><span>Cart</span></div>
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <rect x="6" y="4" width="12" height="16" rx="2" />
+                <path d="M9 4h6v2H9z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg><span>Approval</span></div>
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <path d="M4 5h16l-6 8v5l-4 2v-7z" />
+              </svg><span>Filter</span></div>
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <path d="M7 3h7l4 4v14H7z" />
+                <path d="M9 12h6M9 16h6M9 8h3" />
+              </svg><span>Docs</span></div>
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <path d="M4 5h16v10H8l-4 4z" />
+              </svg><span>Comments</span></div>
+            <div class="rb-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <circle cx="10" cy="10" r="6" />
+                <path d="M14.3 14.3L20 20" />
+              </svg><span>Audit</span></div>
+          </div>
+
+        </div>
+
+        <div class="aurora-statusbar">
+          <div id="statusLeft">Connected to SR0003EIG\AURORA &nbsp;&nbsp; Logged in as: —</div>
+          <div>Version: 1.5.3.1</div>
+        </div>
+
+        <div class="modal-overlay" id="modalOverlay">
+          <div class="modal-card">
+            <div class="modal-head">
+              <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M12 3L2 20h20z" />
+                  <path d="M12 9v5M12 17h.01" />
+                </svg>Record</div>
+              <div class="modal-close" onclick="closeModal()">✕</div>
+            </div>
+            <div class="modal-body">
+              <div class="grp-label">New Observation</div>
+              <label
+                style="font-size:13.5px;color:#777;font-weight:700;display:block;margin-bottom:8px;">Activity</label>
+              <div class="dd-wrap">
+                <div class="dd" id="ddToggle" onclick="toggleDD()"><span id="ddSelected">Select an
+                    activity…</span><span>▾</span></div>
+                <div class="dd-list" id="ddList"></div>
+              </div>
+              <div class="modal-actions">
+                <button class="btn btn-primary" id="okBtn" disabled onclick="confirmActivity()">OK</button>
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const ACTIVITIES = ["Bridge Operations", "Bunkering Operations", "Cargo Operations (Oil and Gas)", "Chemical Handling", "Lifting Operations", "Drills", "Electrical Operations", "Enclosed Space Entry", "Environmental/Garbage Management", "Galley Operations", "Hot Work", "Housekeeping", "Ladder Use/ Working At Height", "Machinery Operations", "Maintenance and Repair", "Mooring/Anchoring Operations", "Other", "Repetitive Motion/ Manual Handling", "Safe Movement Around the Vessel", "Power/Hand Tools", "Mechanical Handling", "Cyber Risk Management", "Security"];
+
+    const CHECKLIST = [
+      "Risk assessment and toolbox talk completed?", "PPE correct?", "Good housekeeping in the area?",
+      "Proper rate of travel being used?", "Used non-skid walkways where appropriate?",
+      "Environmental conditions allow safe movement on in this area?", "The motion of the vessel has been accounted for?",
+      "Safe guards and barriers in place to prevent movement in unsafe areas?", "Are workers comfortable in the temperature conditions?",
+      "Are weather conditions safe for the task to be carried out?", "Correct footwear with laces tied and heel straps in place?",
+      "Are current and forecast weather condition suitable?", "Do environmental conditions allow for safe movement in this area?",
+      "Has the motion of the vessel has been accounted for?", "Have environmental conditions been considered and accounted for?"
+    ];
+
+    const STEPS = ["Login", "Select Activity", "Complete Checklist", "Submit"];
+    let selectedActivity = null;
+    let interveneYes = false;
+    let loggedInUser = '';
+
+    function renderSteps(activeIdx) {
+      const el = document.getElementById('steps');
+      el.innerHTML = STEPS.map((s, i) => {
+        let cls = i === activeIdx ? 'active' : (i < activeIdx ? 'done' : '');
+        return `<div class="step ${cls}"><div class="num">${i < activeIdx ? '✓' : i + 1}</div>${s}</div>`;
+      }).join('');
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function showView(id, stepIdx) {
+      document.querySelectorAll('.center-inner').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      renderSteps(stepIdx);
+    }
+
+    // LOGIN
+    function checkLoginReady() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('pw').value;
+      document.getElementById('loginBtn').disabled = !(u.length > 0 && p.length > 0);
+    }
+    document.getElementById('username').addEventListener('input', checkLoginReady);
+    document.getElementById('pw').addEventListener('input', checkLoginReady);
+
+    function doLogin() {
+      loggedInUser = document.getElementById('username').value.trim();
+      document.getElementById('statusLeft').textContent = `Connected to SR0003EIG\\AURORA    Logged in as: ${loggedInUser}`;
+      showScreen('screen-app');
+      showView('view-dashboard', 1);
+    }
+
+    // MODAL / ACTIVITY DROPDOWN
+    function openModal() { document.getElementById('modalOverlay').classList.add('active'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('ddList').classList.remove('open'); }
+    function buildDD() {
+      const list = document.getElementById('ddList');
+      list.innerHTML = ACTIVITIES.map(a => `<div onclick="pickActivity('${a.replace(/'/g, "\\'")}')" class="${a === 'Safe Movement Around the Vessel' ? 'highlight' : ''}">${a}</div>`).join('');
+    }
+    function toggleDD() { document.getElementById('ddList').classList.toggle('open'); }
+    function pickActivity(a) {
+      selectedActivity = a;
+      document.getElementById('ddSelected').textContent = a;
+      document.getElementById('ddList').classList.remove('open');
+      document.getElementById('okBtn').disabled = false;
+    }
+    function confirmActivity() {
+      document.getElementById('activityLabel').textContent = selectedActivity;
+      closeModal();
+      buildChecklist();
+      buildCalendar();
+      showView('view-form', 2);
+    }
+
+    // CALENDAR
+    function toggleCal() { document.getElementById('miniCal').classList.toggle('open'); }
+    function buildCalendar() {
+      const now = new Date();
+      const year = now.getFullYear(), month = now.getMonth();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const first = new Date(year, month, 1).getDay();
+      const offset = (first + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let cells = '';
+      for (let i = 0; i < offset; i++) cells += `<div class="blank"></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = d === now.getDate();
+        cells += `<div class="day ${isToday ? 'today' : ''}" onclick="pickDate(${d},${month},${year})">${d}</div>`;
+      }
+      document.getElementById('miniCal').innerHTML = `
+    <div class="cal-head"><span>‹</span>${monthNames[month]} ${year}<span>›</span></div>
+    <div class="cal-grid">
+      <div class="dow">Mo</div><div class="dow">Tu</div><div class="dow">We</div><div class="dow">Th</div><div class="dow">Fr</div><div class="dow">Sa</div><div class="dow">Su</div>
+      ${cells}
+    </div>`;
+    }
+    function pickDate(d, m, y) {
+      const dd = String(d).padStart(2, '0'), mm = String(m + 1).padStart(2, '0');
+      document.getElementById('dateField').value = `${dd}/${mm}/${y}`;
+      document.getElementById('miniCal').classList.remove('open');
+    }
+
+    // CHECKLIST
+    function buildChecklist() {
+      const body = document.getElementById('checklistBody');
+      body.innerHTML = CHECKLIST.map((q, i) => `
+    <tr id="row-${i}">
+      <td>${i + 1}</td><td>${q}</td>
+      <td class="center"><input type="radio" class="radio na" name="q${i}" value="na" onclick="clearRowFlag(${i})"></td>
+      <td class="center"><input type="radio" class="radio yes" name="q${i}" value="yes" onclick="clearRowFlag(${i})"></td>
+      <td class="center"><input type="radio" class="radio no" name="q${i}" value="no" onclick="clearRowFlag(${i})"></td>
+    </tr>`).join('');
+    }
+    function clearRowFlag(i) { document.getElementById(`row-${i}`).classList.remove('missing'); }
+
+    function setIntervene(val) { interveneYes = val; }
+
+    function trySubmit() {
+      let missing = [];
+      if (!document.getElementById('dateField').value) missing.push('date');
+      CHECKLIST.forEach((q, i) => {
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        const row = document.getElementById(`row-${i}`);
+        if (!checked) { row.classList.add('missing'); missing.push(i); } else { row.classList.remove('missing'); }
+      });
+      const banner = document.getElementById('formBanner');
+      if (missing.length > 0) { banner.classList.add('show'); return; }
+      banner.classList.remove('show');
+      const yesCount = CHECKLIST.filter((q, i) => document.querySelector(`input[name="q${i}"]:checked`).value === 'yes').length;
+    //   document.getElementById('summaryBox').innerHTML = `
+    // <div><span>Activity</span><b>${selectedActivity}</b></div>
+    // <div><span>Observation date</span><b>${document.getElementById('dateField').value}</b></div>
+    // <div><span>Checklist items answered "Yes"</span><b>${yesCount} / ${CHECKLIST.length}</b></div>
+    // <div><span>Job intervention required</span><b>${interveneYes ? 'Yes' : 'No'}</b></div>`;
+      showView('view-confirm', 3);
+    }
+
+    function restart() {
+      document.getElementById('username').value = '';
+      document.getElementById('pw').value = '';
+      checkLoginReady();
+      selectedActivity = null; interveneYes = false;
+      document.getElementById('ddSelected').textContent = 'Select an activity…';
+      document.getElementById('okBtn').disabled = true;
+      document.querySelectorAll('input[name="intervene"]').forEach(r => r.checked = false);
+      document.querySelector('input[name="intervene"][onclick="setIntervene(false)"]').checked = true;
+      showScreen('screen-login');
+    }
+
+    buildDD();
+  </script>
+</body>
+
+</html>
