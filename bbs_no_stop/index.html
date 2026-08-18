@@ -967,6 +967,14 @@
       margin-bottom: 14px;
     }
 
+    .follow-fields .fl.conditional {
+      display: none;
+    }
+
+    .follow-fields .fl.conditional.show {
+      display: block;
+    }
+
     .follow-fields .fl label {
       font-size: 14px;
       color: #666;
@@ -1260,6 +1268,8 @@
                   <label><input type="radio" name="intervene" checked onclick="setIntervene(false)"> No</label>
                 </div>
                 <div class="follow-fields">
+                  <div class="fl conditional" id="interventionField"><label>Intervention</label><textarea
+                      placeholder="Describe the stop authority or intervention action taken…"></textarea></div>
                   <div class="fl"><label>While</label><textarea
                       placeholder="Describe what the person was doing when you intervened…"></textarea></div>
                   <div class="fl"><label>Was</label><textarea
@@ -1360,7 +1370,7 @@
   <script>
     const ACTIVITIES = ["Bridge Operations", "Bunkering Operations", "Cargo Operations (Oil and Gas)", "Chemical Handling", "Lifting Operations", "Drills", "Electrical Operations", "Enclosed Space Entry", "Environmental/Garbage Management", "Galley Operations", "Hot Work", "Housekeeping", "Ladder Use/ Working At Height", "Machinery Operations", "Maintenance and Repair", "Mooring/Anchoring Operations", "Other", "Repetitive Motion/ Manual Handling", "Safe Movement Around the Vessel", "Power/Hand Tools", "Mechanical Handling", "Cyber Risk Management", "Security"];
 
-    const CHECKLIST = [
+    const CHECKLIST_VESSEL = [
       "Risk assessment and toolbox talk completed?", "PPE correct?", "Good housekeeping in the area?",
       "Proper rate of travel being used?", "Used non-skid walkways where appropriate?",
       "Environmental conditions allow safe movement on in this area?", "The motion of the vessel has been accounted for?",
@@ -1369,6 +1379,24 @@
       "Are current and forecast weather condition suitable?", "Do environmental conditions allow for safe movement in this area?",
       "Has the motion of the vessel has been accounted for?", "Have environmental conditions been considered and accounted for?"
     ];
+
+    const CHECKLIST_GALLEY = [
+      "Risk assessment and toolbox talk completed?", "PPE correct?", "Good hygiene practices?",
+      "Eyes and hands focused on the task?", "Good housekeeping in the work area?",
+      "Deck clean and free from slip/trip hazards?", "Safety devices being used on appliances?",
+      "Safe knife and slicer handling practices?", "Correct coloured chopping boards being used for different foods?",
+      "Chopping boards and utensils being stowed correctly?", "Safe practices when handling hot items?",
+      "Proper deep fat fryer in use when deep frying food?", "Are workers comfortable in the temperature conditions?",
+      "Are current and forecast weather condition suitable?", "Are weather conditions safe for the task to be carried out?",
+      "Do environmental conditions allow for safe movement in this area?", "Has the motion of the vessel has been accounted for?"
+    ];
+
+    const CHECKLISTS_BY_ACTIVITY = {
+      "Safe Movement Around the Vessel": CHECKLIST_VESSEL,
+      "Galley Operations": CHECKLIST_GALLEY
+    };
+
+    let CHECKLIST = CHECKLIST_VESSEL;
 
     const STEPS = ["Login", "Select Activity", "Complete Checklist", "Submit"];
     let selectedActivity = null;
@@ -1414,7 +1442,7 @@
     function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('ddList').classList.remove('open'); }
     function buildDD() {
       const list = document.getElementById('ddList');
-      list.innerHTML = ACTIVITIES.map(a => `<div onclick="pickActivity('${a.replace(/'/g, "\\'")}')" class="${a === 'Safe Movement Around the Vessel' ? 'highlight' : ''}">${a}</div>`).join('');
+      list.innerHTML = ACTIVITIES.map(a => `<div onclick="pickActivity('${a.replace(/'/g, "\\'")}')">${a}</div>`).join('');
     }
     function toggleDD() { document.getElementById('ddList').classList.toggle('open'); }
     function pickActivity(a) {
@@ -1427,15 +1455,34 @@
       document.getElementById('activityLabel').textContent = selectedActivity;
       closeModal();
       buildChecklist();
+      const now = new Date();
+      calMonth = now.getMonth();
+      calYear = now.getFullYear();
       buildCalendar();
+      interveneYes = false;
+      document.querySelectorAll('input[name="intervene"]').forEach(r => r.checked = false);
+      document.querySelector('input[name="intervene"][onclick="setIntervene(false)"]').checked = true;
+      document.getElementById('interventionField').classList.remove('show');
       showView('view-form', 2);
     }
 
     // CALENDAR
-    function toggleCal() { document.getElementById('miniCal').classList.toggle('open'); }
+    let calMonth, calYear;
+    function toggleCal() {
+      const cal = document.getElementById('miniCal');
+      const willOpen = !cal.classList.contains('open');
+      if (willOpen) buildCalendar();
+      cal.classList.toggle('open');
+    }
+    function changeCalMonth(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      buildCalendar();
+    }
     function buildCalendar() {
       const now = new Date();
-      const year = now.getFullYear(), month = now.getMonth();
+      const year = calYear, month = calMonth;
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const first = new Date(year, month, 1).getDay();
       const offset = (first + 6) % 7;
@@ -1443,11 +1490,11 @@
       let cells = '';
       for (let i = 0; i < offset; i++) cells += `<div class="blank"></div>`;
       for (let d = 1; d <= daysInMonth; d++) {
-        const isToday = d === now.getDate();
+        const isToday = d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
         cells += `<div class="day ${isToday ? 'today' : ''}" onclick="pickDate(${d},${month},${year})">${d}</div>`;
       }
       document.getElementById('miniCal').innerHTML = `
-    <div class="cal-head"><span>‹</span>${monthNames[month]} ${year}<span>›</span></div>
+    <div class="cal-head"><span onclick="changeCalMonth(-1)">‹</span>${monthNames[month]} ${year}<span onclick="changeCalMonth(1)">›</span></div>
     <div class="cal-grid">
       <div class="dow">Mo</div><div class="dow">Tu</div><div class="dow">We</div><div class="dow">Th</div><div class="dow">Fr</div><div class="dow">Sa</div><div class="dow">Su</div>
       ${cells}
@@ -1461,6 +1508,7 @@
 
     // CHECKLIST
     function buildChecklist() {
+      CHECKLIST = CHECKLISTS_BY_ACTIVITY[selectedActivity] || CHECKLIST_VESSEL;
       const body = document.getElementById('checklistBody');
       body.innerHTML = CHECKLIST.map((q, i) => `
     <tr id="row-${i}">
@@ -1472,7 +1520,10 @@
     }
     function clearRowFlag(i) { document.getElementById(`row-${i}`).classList.remove('missing'); }
 
-    function setIntervene(val) { interveneYes = val; }
+    function setIntervene(val) {
+      interveneYes = val;
+      document.getElementById('interventionField').classList.toggle('show', val);
+    }
 
     function trySubmit() {
       let missing = [];
@@ -1503,6 +1554,7 @@
       document.getElementById('okBtn').disabled = true;
       document.querySelectorAll('input[name="intervene"]').forEach(r => r.checked = false);
       document.querySelector('input[name="intervene"][onclick="setIntervene(false)"]').checked = true;
+      document.getElementById('interventionField').classList.remove('show');
       showScreen('screen-login');
     }
 
