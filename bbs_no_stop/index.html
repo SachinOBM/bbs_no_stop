@@ -30,6 +30,81 @@
       display: block;
     }
 
+    /* AUDIO: start overlay */
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 46, 74, .88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(3px);
+    }
+
+    .start-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 48px 56px;
+      text-align: center;
+      width: 460px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, .4);
+    }
+
+    .start-icon {
+      font-size: 42px;
+      margin-bottom: 14px;
+    }
+
+    .start-card h2 {
+      font-size: 24px;
+      font-weight: 900;
+      color: #161A20;
+      margin-bottom: 10px;
+    }
+
+    .start-card p {
+      font-size: 15px;
+      color: #8890A0;
+      margin-bottom: 26px;
+      line-height: 1.5;
+    }
+
+    /* AUDIO: floating control widget */
+    .audio-widget {
+      position: absolute;
+      bottom: 22px;
+      right: 26px;
+      display: flex;
+      gap: 10px;
+      z-index: 120;
+    }
+
+    .aw-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid #E0E4E9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
+      transition: transform .1s ease, box-shadow .12s ease;
+      user-select: none;
+    }
+
+    .aw-btn:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+      transform: translateY(-1px);
+    }
+
+    .aw-btn.muted {
+      color: #C0272D;
+    }
+
     .app {
       width: 1920px;
       height: 846px;
@@ -1104,6 +1179,14 @@
 
       <!-- SCREEN: LOGIN -->
       <div class="screen active" id="screen-login">
+        <div class="start-overlay" id="startOverlay">
+          <div class="start-card">
+            <div class="start-icon">🔊</div>
+            <h2>Ready to begin?</h2>
+            <p>This demo includes voice-over narration for each step.</p>
+            <button class="btn btn-primary" onclick="beginDemo()">Start demo with sound</button>
+          </div>
+        </div>
         <div class="login-card">
           <div class="login-logo"><img src="./images/aurora-logo.png" height="60px" alt=""></div>
           <div class="field">
@@ -1122,6 +1205,13 @@
           </div>
         </div>
       </div>
+
+      <!-- AUDIO CONTROL WIDGET (visible throughout the demo) -->
+      <div class="audio-widget" id="audioWidget">
+        <div class="aw-btn" id="awMuteBtn" onclick="toggleMute()" title="Mute/unmute narration">🔊</div>
+        <div class="aw-btn" onclick="replayAudio()" title="Replay this step's narration">↻</div>
+      </div>
+      <audio id="stepAudio" preload="auto"></audio>
 
       <!-- SCREEN: AURORA APP -->
       <div class="screen" id="screen-app">
@@ -1403,6 +1493,64 @@
     let interveneYes = false;
     let loggedInUser = '';
 
+    // AUDIO NARRATION — 9 steps
+    // Place your 9 mp3 files in an "audio" folder next to this file, using these exact names
+    // (or edit the paths below to match whatever filenames your files already have).
+    const AUDIO_MAP = {
+      step1_login: './audio/01-login.mp3',
+      step2_dashboard: './audio/02-new-observation.mp3',
+      step3_activity: './audio/03-select-activity.mp3',
+      step4_date: './audio/04-observation-date.mp3',
+      step5_checklist: './audio/05-checklist.mp3',
+      step6_intervene: './audio/06-intervene.mp3',
+      step7_fields: './audio/07-while-was-because.mp3',
+      step8_review: './audio/08-review.mp3',
+      step9_submit: './audio/09-submit.mp3'
+    };
+    let audioMuted = false;
+    let currentAudioKey = null;
+    let checklistNarrationPlayed = false;
+
+    function playStep(key, onEnded) {
+      currentAudioKey = key;
+      const src = AUDIO_MAP[key];
+      const el = document.getElementById('stepAudio');
+      if (!src) return;
+      el.onended = onEnded || null;
+      el.pause();
+      el.src = src;
+      el.currentTime = 0;
+      el.muted = audioMuted;
+      el.play().catch(() => { /* file missing or blocked — demo still works without sound */ });
+    }
+    function toggleMute() {
+      audioMuted = !audioMuted;
+      const el = document.getElementById('stepAudio');
+      el.muted = audioMuted;
+      const btn = document.getElementById('awMuteBtn');
+      btn.textContent = audioMuted ? '🔇' : '🔊';
+      btn.classList.toggle('muted', audioMuted);
+    }
+    function replayAudio() {
+      if (!currentAudioKey) return;
+      const el = document.getElementById('stepAudio');
+      el.currentTime = 0;
+      el.muted = audioMuted;
+      el.play().catch(() => { });
+    }
+    function beginDemo() {
+      document.getElementById('startOverlay').style.display = 'none';
+      playStep('step1_login');
+    }
+    function checkAllAnswered() {
+      if (checklistNarrationPlayed) return;
+      const allAnswered = CHECKLIST.every((q, i) => document.querySelector(`input[name="q${i}"]:checked`));
+      if (allAnswered) {
+        checklistNarrationPlayed = true;
+        playStep('step6_intervene');
+      }
+    }
+
     function renderSteps(activeIdx) {
       const el = document.getElementById('steps');
       el.innerHTML = STEPS.map((s, i) => {
@@ -1435,10 +1583,14 @@
       document.getElementById('statusLeft').textContent = `Connected to SR0003EIG\\AURORA    Logged in as: ${loggedInUser}`;
       showScreen('screen-app');
       showView('view-dashboard', 1);
+      playStep('step2_dashboard');
     }
 
     // MODAL / ACTIVITY DROPDOWN
-    function openModal() { document.getElementById('modalOverlay').classList.add('active'); }
+    function openModal() {
+      document.getElementById('modalOverlay').classList.add('active');
+      playStep('step3_activity');
+    }
     function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); document.getElementById('ddList').classList.remove('open'); }
     function buildDD() {
       const list = document.getElementById('ddList');
@@ -1463,7 +1615,9 @@
       document.querySelectorAll('input[name="intervene"]').forEach(r => r.checked = false);
       document.querySelector('input[name="intervene"][onclick="setIntervene(false)"]').checked = true;
       document.getElementById('interventionField').classList.remove('show');
+      checklistNarrationPlayed = false;
       showView('view-form', 2);
+      playStep('step4_date');
     }
 
     // CALENDAR
@@ -1504,6 +1658,7 @@
       const dd = String(d).padStart(2, '0'), mm = String(m + 1).padStart(2, '0');
       document.getElementById('dateField').value = `${dd}/${mm}/${y}`;
       document.getElementById('miniCal').classList.remove('open');
+      playStep('step5_checklist');
     }
 
     // CHECKLIST
@@ -1518,11 +1673,15 @@
       <td class="center"><input type="radio" class="radio no" name="q${i}" value="no" onclick="clearRowFlag(${i})"></td>
     </tr>`).join('');
     }
-    function clearRowFlag(i) { document.getElementById(`row-${i}`).classList.remove('missing'); }
+    function clearRowFlag(i) {
+      document.getElementById(`row-${i}`).classList.remove('missing');
+      checkAllAnswered();
+    }
 
     function setIntervene(val) {
       interveneYes = val;
       document.getElementById('interventionField').classList.toggle('show', val);
+      playStep('step7_fields', () => playStep('step8_review'));
     }
 
     function trySubmit() {
@@ -1543,6 +1702,7 @@
     // <div><span>Checklist items answered "Yes"</span><b>${yesCount} / ${CHECKLIST.length}</b></div>
     // <div><span>Job intervention required</span><b>${interveneYes ? 'Yes' : 'No'}</b></div>`;
       showView('view-confirm', 3);
+      playStep('step9_submit');
     }
 
     function restart() {
@@ -1555,6 +1715,7 @@
       document.querySelectorAll('input[name="intervene"]').forEach(r => r.checked = false);
       document.querySelector('input[name="intervene"][onclick="setIntervene(false)"]').checked = true;
       document.getElementById('interventionField').classList.remove('show');
+      checklistNarrationPlayed = false;
       showScreen('screen-login');
     }
 
